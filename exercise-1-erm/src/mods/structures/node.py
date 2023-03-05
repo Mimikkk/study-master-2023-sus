@@ -7,5 +7,5 @@ class Node(object):
   threshold: float = None
   left: 'Node' = None
   right: 'Node' = None
-  variance_reduce: float = None
+  variance: float = None
   value: float = None

@@ -1,86 +1,118 @@
 import numpy as np
 from .node import Node
-from .dataset import DataSet
-
 
 class DecisionTreeRegressor(object):
-  def __init__(self, min_samples_split=2, max_depth=2):
+  def __init__(self, min_samples_split, max_depth):
     self.root = None
-
-    self.min_samples = min_samples_split
+    self.min_samples_split = min_samples_split
     self.max_depth = max_depth
 
-  def build_tree(self, dataset, depth=0):
-    x, y = dataset[:, :-1], dataset[:, -1]
-    (samples, features) = np.shape(x)
+  def build_tree(self, dataset, curr_depth=0):
+    ''' recursive function to build the tree '''
 
-    if samples >= self.min_samples and depth <= self.max_depth:
-      best = calculate_best_split(dataset, features)
-      if best["variance"] > 0:
-        left_subtree = self.build_tree(best["dataset_left"], depth + 1)
-        right_subtree = self.build_tree(best["dataset_right"], depth + 1)
-        return Node(best["feature"], best["threshold"], left_subtree, right_subtree, best["variance"])
+    X, Y = dataset[:, :-1], dataset[:, -1]
+    num_samples, num_features = np.shape(X)
+    best_split = {}
+    # split until stopping conditions are met
+    if num_samples >= self.min_samples_split and curr_depth <= self.max_depth:
+      # find the best split
+      best_split = self.get_best_split(dataset, num_samples, num_features)
+      # check if information gain is positive
+      if best_split["variance"] > 0:
+        # recur left
+        left_subtree = self.build_tree(best_split["dataset_left"], curr_depth + 1)
+        # recur right
+        right_subtree = self.build_tree(best_split["dataset_right"], curr_depth + 1)
+        # return decision node
+        return Node(feature=best_split["feature"], threshold=best_split["threshold"],
+                    left=left_subtree, right=right_subtree, variance=best_split["variance"])
 
-    return Node(value=np.mean(y))
+    # compute leaf node
+    leaf_value = self.calculate_leaf_value(Y)
+    # return leaf node
+    return Node(value=leaf_value)
+
+  def get_best_split(self, dataset, num_samples, num_features):
+    ''' function to find the best split '''
+
+    # dictionary to store the best split
+    best_split = {}
+    max_var_red = -float("inf")
+    # loop over all the features
+    for feature_index in range(num_features):
+      feature_values = dataset[:, feature_index]
+      possible_thresholds = np.unique(feature_values)
+      # loop over all the feature values present in the data
+      for threshold in possible_thresholds:
+        # get current split
+        dataset_left, dataset_right = self.split(dataset, feature_index, threshold)
+        # check if childs are not null
+        if len(dataset_left) > 0 and len(dataset_right) > 0:
+          y, left_y, right_y = dataset[:, -1], dataset_left[:, -1], dataset_right[:, -1]
+          # compute information gain
+          curr_var_red = self.variance_reduction(y, left_y, right_y)
+          # update the best split if needed
+          if curr_var_red > max_var_red:
+            best_split["feature"] = feature_index
+            best_split["threshold"] = threshold
+            best_split["dataset_left"] = dataset_left
+            best_split["dataset_right"] = dataset_right
+            best_split["variance"] = curr_var_red
+            max_var_red = curr_var_red
+
+    # return best split
+    return best_split
+
+  def split(self, dataset, feature_index, threshold):
+    ''' function to split the data '''
+
+    dataset_left = np.array([row for row in dataset if row[feature_index] <= threshold])
+    dataset_right = np.array([row for row in dataset if row[feature_index] > threshold])
+    return dataset_left, dataset_right
+
+  def variance_reduction(self, parent, l_child, r_child):
+    ''' function to compute variance reduction '''
+
+    weight_l = len(l_child) / len(parent)
+    weight_r = len(r_child) / len(parent)
+    reduction = np.var(parent) - (weight_l * np.var(l_child) + weight_r * np.var(r_child))
+    return reduction
+
+  def calculate_leaf_value(self, Y):
+    ''' function to compute leaf node '''
+
+    val = np.mean(Y)
+    return val
 
   def print_node(self, tree=None, indent=" "):
-    if not tree: tree = self.root
+    ''' function to print the tree '''
+
+    if not tree:
+      tree = self.root
 
     if tree.value is not None:
       print(tree.value)
 
     else:
-      print(f"X_{str(tree.feature)} <= {tree.threshold} ? {tree.variance}")
-      print(f"{indent}left:", end="")
+      print("X_" + str(tree.feature), "<=", tree.threshold, "?", tree.variance)
+      print("%sleft:" % (indent), end="")
       self.print_node(tree.left, indent + indent)
-      print(f"{indent}right:", end="")
+      print("%sright:" % (indent), end="")
       self.print_node(tree.right, indent + indent)
 
-  def fit(self, dataset: DataSet):
+  def fit(self, dataset):
     self.root = self.build_tree(np.concatenate(dataset, axis=1))
 
-  def _predict(self, tree: Node, value):
+  def make_prediction(self, x, tree):
     if tree.value is not None: return tree.value
-
-    value = value[tree.feature]
-    if value <= tree.threshold:
-      return self._predict(tree.left, value)
+    feature_val = x[tree.feature]
+    if feature_val <= tree.threshold:
+      return self.make_prediction(x, tree.left)
     else:
-      return self._predict(tree.right, value)
+      return self.make_prediction(x, tree.right)
 
   def predict(self, X):
-    return [self._predict(self.root, x) for x in X]
+    ''' function to predict a single data point '''
 
-def calculate_variance(parent, l_child, r_child):
-  left = len(l_child) / len(parent)
-  right = len(r_child) / len(parent)
-  return np.var(parent) - left * np.var(l_child) - right * np.var(r_child)
-
-def calculate_best_split(dataset, feature_count):
-  best = {}
-  best_variance = -float("inf")
-
-  for feature in range(feature_count):
-    thresholds = np.unique(dataset[:, feature])
-    # loop over all the feature values present in the data
-    for threshold in thresholds:
-      left, right = split_ds(dataset, feature, threshold)
-
-      # check if childs are not null
-      if len(left) > 0 and len(right) > 0:
-        y, left_y, right_y = dataset[:, -1], left[:, -1], right[:, -1]
-        variance = calculate_variance(y, left_y, right_y)
-
-        if variance > best_variance:
-          best["feature"] = feature
-          best["threshold"] = threshold
-          best["dataset_left"] = left
-          best["dataset_right"] = right
-          best["variance"] = variance
-          best_variance = variance
-  return best
-
-def split_ds(dataset, feature: int, threshold: float):
-  left = np.array([row for row in dataset if row[feature] <= threshold])
-  right = np.array([row for row in dataset if row[feature] > threshold])
-  return left, right
+    preditions = [self.make_prediction(x, self.root) for x in X]
+    return preditions

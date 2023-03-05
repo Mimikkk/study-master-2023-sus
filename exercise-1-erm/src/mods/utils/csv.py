@@ -7,7 +7,7 @@ def read(filename: str) -> np.ndarray[float]:
     # skip header
     csv.readline()
     lines = csv.readlines()
-  return np.array(exhaust(map(lambda line: map(float, line.strip().split_ds(',')), lines)))
+  return np.array(exhaust(map(lambda line: map(float, line.strip().split(',')), lines)))
 
 def save(filename: str, solution: Iterable[float]):
   header = '"Y"'
