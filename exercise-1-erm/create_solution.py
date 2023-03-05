@@ -23,7 +23,7 @@ parser.add_argument("resultname", help="name of the output file")
 if __name__ == '__main__':
   args = parser.parse_args()
   solution = construct_solution(args.directory)
-  print(solution)
+
   with open(args.resultname, 'w') as file:
     file.write("id,Y\n")
     for i, line in enumerate(solution): file.write(f"{i},{line}\n")

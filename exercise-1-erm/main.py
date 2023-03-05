@@ -1,3 +1,4 @@
+from typing import Iterable, overload
 class Node(object):
   def __init__(self):
     self.left = None  # Typ: Node, wierzchołek znajdujący się po lewej stornie
@@ -33,25 +34,36 @@ class Node(object):
 # Jeśli znasz numpy i bolą Cię od poniższego kodu oczy - możesz go zmienić
 # Jeśli nie znasz numpy - skorzystaj z kodu, dokończ zadanie... i naucz sie numpy. W kolejnych tygodniach będziemy z niego korzystać.
 
-id = "1"  # podaj id zbioru danych który chcesz przetworzyć np. 1
-data = []
-y = [line.strip() for line in open(id + '-Y.csv')]
-for i, line in enumerate(open(id + '-X.csv')):
-  if i == 0: continue
-  x = [float(j) for j in line.strip().split(',')]
-  nAttr = len(x)
-  x.append(float(y[i]))
-  data.append(x)
-print('Data load complete!')
-tree = Node()
-tree.perform_split(data)
-print('Training complete!')
+# podaj id zbioru danych który chcesz przetworzyć np. 1
 
-with open(id + '.csv', 'w') as f:
-  for i, line in enumerate(open(id + '-test.csv')):
-    if i == 0:
-      continue
-    x = [float(j) for j in line.strip().split(',')]
-    y = tree.predict(x)
-    f.write(str(y))
-    f.write('\n')
+class Tree(object):
+  @overload
+  def predict(self, value: Iterable[float]) -> float: ...
+  @overload
+  def predict(self, value: Iterable[Iterable[float]]) -> Iterable[float]: ...
+
+  def predict(self, value: Iterable[float] | Iterable[Iterable[float]]) -> int | Iterable[int]:
+    value = list(value)
+    if isinstance(value[0], Iterable): return map(self.predict, value)
+    return value[0] > 0.5 and 1 or 0
+
+def read_csv(filename: str):
+  with open(f'resources/database/{filename}.csv', 'r') as csv:
+    # skip header
+    csv.readline()
+    lines = csv.readlines()
+  return map(lambda line: map(float, line.strip().split(',')), lines)
+
+def save_csv(filename: str, solution: Iterable[float]):
+  header = '"Y"'
+  content = map(str, solution)
+  with open(filename, 'w') as file: file.writelines(f"{line}\n" for line in (header, *content))
+
+if __name__ == '__main__':
+  tree = Tree()
+
+  identifier = "1"
+  X = read_csv(f'{identifier}-test')
+  Y = tree.predict(X)
+
+  save_csv(filename=f'resources/results/{identifier}.csv', solution=Y)
