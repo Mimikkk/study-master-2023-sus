@@ -7,6 +7,7 @@ class Node(object):
   def __init__(self):
     self.left = None
     self.right = None
+    self.value = 0
 
   def perform_split(self, data):
     ...
@@ -30,6 +31,9 @@ class Node(object):
         return self.left.predict(example)
     return zwróć wartość (Node jest liściem)
     """
+  def fit(self, data, labels):
+    self.perform_split(zip(data, labels))
+
   @overload
   def predict(self, value: Iterable[float]) -> float: ...
   @overload
