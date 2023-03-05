@@ -10,11 +10,11 @@ if __name__ == '__main__':
   ds = map(csv.read, (f'{identifier}-X', f'{identifier}-Y'))
   ds_train, (x_test, y_test) = dataset.split(ds)
 
-  regressor = DecisionTreeRegressor(min_samples_split=5, max_depth=5)
-  regressor.fit(ds_train)
-  regressor.print_node()
+  regressor = DecisionTreeRegressor()
+  tree = regressor.fit(ds_train, min_samples_per_split=5, max_depth=5)
+  print(*tree.present(), sep='')
 
-  y_pred = regressor.predict(x_test)
+  y_pred = tree.predict(x_test)
   err = np.sqrt(mean_squared_error(y_test, y_pred))
 
   print(f"RMSE is {err}")
