@@ -1,26 +1,19 @@
-from sklearn.metrics import mean_squared_error
 import numpy as np
 from mods.utils import csv
-from mods.structures import DecisionTreeRegressor
+from mods.structures import Node
 import mods.structures.dataset as dataset
 
+def mse(y, y_pred):
+  return np.mean((np.array(y) - np.array(y_pred)) ** 2)
+def rmse(y, y_pred):
+  return np.sqrt(mse(y, y_pred))
+
 if __name__ == '__main__':
-  identifier = "1"
+  for identifier in map(str, range(1, 14)):
+    ds = dataset.read(identifier)
 
-  ds = map(csv.read, (f'{identifier}-X', f'{identifier}-Y'))
-  ds_train, (x_test, y_test) = dataset.split(ds)
+    tree = Node.fit(ds, min_samples_per_split=int(len(ds) * 0.05), max_depth=5)
+    print(*tree.present(), sep='')
 
-  regressor = DecisionTreeRegressor()
-  tree = regressor.fit(ds_train, min_samples_per_split=5, max_depth=5)
-  print(*tree.present(), sep='')
-
-  y_pred = tree.predict(x_test)
-  err = np.sqrt(mean_squared_error(y_test, y_pred))
-
-  print(f"RMSE is {err}")
-
-  csv.save(filename=f'resources/results/{identifier}.csv', solution=y_pred)
-  csv.save(
-    filename=f'resources/results/{identifier}-com.csv',
-    solution=[y - y_hat for (y, y_hat) in zip(y_test, y_pred)]
-  )
+    x_real = csv.read(f'{identifier}-test')
+    csv.save(filename=identifier, solution=tree.predict(x_real))
