@@ -1,7 +1,7 @@
 from typing import Iterable
 from dataclasses import dataclass
 from ..utils import math
-from numpy import ndarray, array, concatenate, var, unique, mean, shape
+from numpy import ndarray, array, concatenate, unique, mean, shape
 
 @dataclass
 class Node(object):
@@ -39,7 +39,7 @@ class Node(object):
   def __create_tree(cls, dataset, min_samples_per_split, max_depth, depth=0):
     values, labels = dataset[:, :-1], dataset[:, -1]
     samples, features = shape(values)
-
+    print(samples, features, depth, min_samples_per_split, max_depth)
     if samples >= min_samples_per_split and depth <= max_depth:
       print(samples, features, depth)
       best = find_best_split(dataset)

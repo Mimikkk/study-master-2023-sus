@@ -12,7 +12,7 @@ if __name__ == '__main__':
   for identifier in map(str, range(1, 14)):
     ds = dataset.read(identifier)
 
-    tree = Node.fit(ds, min_samples_per_split=int(len(ds) * 0.05), max_depth=5)
+    tree = Node.fit(ds, min_samples_per_split=int(len(ds[0]) * 0.025), max_depth=5)
     print(*tree.present(), sep='')
 
     x_real = csv.read(f'{identifier}-test')
