@@ -42,3 +42,15 @@ rozwiązania, spełniający wymagania Kaggle. Plik te przygotowujemy skryptem cr
 - używanie niedozwolonych bibliotek, skopiowanie kodu lub jego fragmentów z internetu = wyzerowanie wszystkich punktów.
 
 Powyższe punkty się sumują. Za zadanie można więc w związku z tym uzyskać więcej niż 100% (punkty bonusowe)
+
+## Opis rozwiązania
+
+Zostało utworzone [rozwiązanie](./src/main.py), które tworzy drzewo decyzyjne przy wykorzystaniu:
+
+- Metoda podziału na podzbiory o najlepszym [zysku wariacji](./src/mods/utils/math.py) (ang. *Variance Reduction*),
+  który jest zdefiniowany jako różnica między wariancją całego zbioru a sumą wariancji podzbiorów po podziale.
+- Jako [kryterium zatrzymania podziałów](./src/mods/structures/node.py) podczas treningu została użyta maksymalna głębokość drzewa (ang. *max_depth*)
+  oraz minimalna wielkość podziału (ang. *min_samples_per_split*).
+- Przy trenowaniu wysłanego rozwiązania zostało użyte 2.5% zbioru całkowitego jako minimalna wielkość podziału, a
+  maksymalna głębokość drzewa wynosiła 5.
+- Jako kandydatów rozpatrywanych podczas podziału były wszystkie dostępne wartości zaobserwowane dla każdego z kryteriów, co spowodowało długi trening ( 2h dla wszystkich drzew ), ale też dało dobre wyniki.
