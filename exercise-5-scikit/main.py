@@ -5,6 +5,8 @@ import seaborn as sns
 import sklearn.ensemble
 from sklearn import linear_model
 from sklearn import neighbors
+from sklearn.model_selection import cross_val_score, KFold
+from sklearn.preprocessing import RobustScaler
 from sklearn.tree import DecisionTreeRegressor, plot_tree
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
@@ -201,7 +203,7 @@ def present_supposedly_best_model(frame: pd.DataFrame):
   scaler = RobustScaler()
   X = scaler.fit_transform(X)
 
-  model = DecisionTreeRegressor(max_depth=8)
+  model = DecisionTreeRegressor(max_depth=5)
   model.fit(X, y)
 
   plt.figure(figsize=(60, 30))
@@ -214,13 +216,85 @@ def present_supposedly_best_model(frame: pd.DataFrame):
   plt.scatter(y, y_pred, marker='o', s=3, alpha=0.9)
   plt.xlabel('Faktyczne wartości')
   plt.ylabel('Przewidywane wartości')
-  plt.title('DecisionTreeRegressor(max_depth=8)')
+  plt.title('DecisionTreeRegressor(max_depth=5)')
 
   plt.plot([y.min(), y.max()], [y.min(), y.max()], '--k', lw=1, alpha=0.8)
   plt.tight_layout()
 
   plt.savefig(f'resources/figures/best-model-slice.png')
   plt.show()
+
+
+def validate_models_with_normalized_features_using_10folds(frame: pd.DataFrame):
+  contents = frame.to_numpy()
+
+  X = contents[:, 0:-1]
+  y = contents[:, -1]
+
+  from sklearn.preprocessing import RobustScaler
+  scaler = RobustScaler()
+  X = scaler.fit_transform(X)
+
+  scores = []
+  k_fold = KFold(n_splits=10, shuffle=True)
+  for (name, regressor) in [
+    ("Random Forest-2", RandomForestRegressor(max_depth=2)),
+    ("Random Forest-5", RandomForestRegressor(max_depth=5)),
+    ("Random Forest-8", RandomForestRegressor(max_depth=8)),
+    ("Random Forest-unbound", RandomForestRegressor(max_depth=None)),
+    ("Linear Regression", linear_model.LinearRegression()),
+    ("Ridge", linear_model.Ridge()),
+    ("Lasso", linear_model.Lasso()),
+    ("Elastic Net", linear_model.ElasticNet()),
+    ("Bayesian Ridge", linear_model.BayesianRidge()),
+    ("Knn-1", neighbors.KNeighborsRegressor(n_neighbors=1)),
+    ("Knn-2", neighbors.KNeighborsRegressor(n_neighbors=2)),
+    ("Knn-3", neighbors.KNeighborsRegressor(n_neighbors=3)),
+    ("Knn-4", neighbors.KNeighborsRegressor(n_neighbors=4)),
+    ("Knn-8", neighbors.KNeighborsRegressor(n_neighbors=8)),
+    ("Knn-13", neighbors.KNeighborsRegressor(n_neighbors=13)),
+    ("Knn-21", neighbors.KNeighborsRegressor(n_neighbors=21)),
+    ("Tree-2", DecisionTreeRegressor(max_depth=2)),
+    ("Tree-5", DecisionTreeRegressor(max_depth=5)),
+    ("Tree-8", DecisionTreeRegressor(max_depth=8)),
+    ("Tree-unbound", DecisionTreeRegressor(max_depth=None)),
+    ("Pony", MLPRegressor()),
+    ("svr-rbf", SVR(kernel="rbf")),
+    ("svr-linear", SVR(kernel="linear")),
+    ("svr-poly", SVR(kernel="poly")),
+    ("ard", linear_model.ARDRegression()),
+    ("sgd", linear_model.SGDRegressor()),
+    ("adaboost", ensemble.AdaBoostRegressor()),
+    ("gradientboosting", ensemble.GradientBoostingRegressor()),
+  ]:
+    print(f"Validating {name}...")
+    rmse_scores = -cross_val_score(regressor, X, y, cv=k_fold, scoring='neg_root_mean_squared_error')
+    r2_scores = cross_val_score(regressor, X, y, cv=k_fold, scoring='r2')
+    rmse_avg = np.average(rmse_scores)
+    r2_avg = np.average(r2_scores)
+    scores.append((name, (r2_avg, rmse_avg)))
+
+  for name, (r2, rmse) in scores: print(format_scores(name, r2, rmse))
+
+  r2_scores = [r2 for _, (r2, _) in scores]
+  rmse_scores = [rmse for _, (_, rmse) in scores]
+  figure, axes = plt.subplots(1, 2, figsize=(32, 8))
+  sns.barplot(x=[name for name, _ in scores], y=r2_scores, ax=axes[0])
+  axes[0].set_title("R2 Average Scores with normalized features")
+  axes[0].set_ylabel("R2 Average Score")
+  axes[0].set_xticklabels(labels=[name for name, _ in scores], rotation=60)
+
+  sns.barplot(x=[name for name, _ in scores], y=rmse_scores, ax=axes[1])
+  axes[1].set_title("RMSE Average Scores with normalized features")
+  axes[1].set_ylabel("RMSE Average Score")
+  axes[1].set_xticklabels(labels=[name for name, _ in scores], rotation=60)
+
+  plt.tight_layout()
+  plt.savefig(f'resources/figures/10fold-model-metrics.png')
+  plt.show()
+
+
+
 
 
 def prelude():
@@ -234,6 +308,7 @@ def prelude():
   if not os.path.exists('resources/datasets/regression.txt'):
     raise Exception("Missing dataset file: resources/datasets/regression.txt")
 
+
 def main():
   prelude()
 
@@ -246,6 +321,8 @@ def main():
   # test_models_with_normalized_features(frame)
 
   present_supposedly_best_model(frame)
+
+  # validate_models_with_normalized_features_using_10folds(frame)
 
 
 if __name__ == '__main__':
