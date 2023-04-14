@@ -2,17 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import sklearn.ensemble
 from sklearn import linear_model
 from sklearn import neighbors
 from sklearn.model_selection import cross_val_score, KFold
-from sklearn.preprocessing import RobustScaler
 from sklearn.tree import DecisionTreeRegressor, plot_tree
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
-import sklearn.tree as trees
 import sklearn.ensemble as ensemble
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import RobustScaler
 
 
 def read():
@@ -56,9 +55,6 @@ def analysis(frame: pd.DataFrame):
   plt.tight_layout()
   plt.savefig(f'resources/figures/correlation-matrix.png')
   plt.show()
-
-
-from sklearn.metrics import mean_squared_error
 
 
 def calculate_metrics(regressor, X, y):
@@ -135,7 +131,6 @@ def test_models_with_normalized_features(frame: pd.DataFrame):
   X = contents[:, 0:-1]
   y = contents[:, -1]
 
-  from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
   scaler = RobustScaler()
   X = scaler.fit_transform(X)
 
@@ -199,7 +194,6 @@ def present_supposedly_best_model(frame: pd.DataFrame):
   X = contents[:, 0:-1]
   y = contents[:, -1]
 
-  from sklearn.preprocessing import RobustScaler
   scaler = RobustScaler()
   X = scaler.fit_transform(X)
 
@@ -231,7 +225,6 @@ def validate_models_with_normalized_features_using_10folds(frame: pd.DataFrame):
   X = contents[:, 0:-1]
   y = contents[:, -1]
 
-  from sklearn.preprocessing import RobustScaler
   scaler = RobustScaler()
   X = scaler.fit_transform(X)
 
@@ -294,9 +287,6 @@ def validate_models_with_normalized_features_using_10folds(frame: pd.DataFrame):
   plt.show()
 
 
-
-
-
 def prelude():
   import os
   if not os.path.exists('resources/figures'):
@@ -314,15 +304,15 @@ def main():
 
   frame = read()
 
-  # analysis(frame)
+  analysis(frame)
 
-  # test_models(frame)
+  test_models(frame)
 
-  # test_models_with_normalized_features(frame)
+  test_models_with_normalized_features(frame)
 
   present_supposedly_best_model(frame)
 
-  # validate_models_with_normalized_features_using_10folds(frame)
+  validate_models_with_normalized_features_using_10folds(frame)
 
 
 if __name__ == '__main__':
