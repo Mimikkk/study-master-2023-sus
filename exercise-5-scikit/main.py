@@ -121,10 +121,24 @@ def test_models(frame: pd.DataFrame):
   plt.show()
 
 
+def prelude():
+  import os
+  if not os.path.exists('resources/figures'):
+    os.makedirs('resources/figures')
+
+  if not os.path.exists('resources/datasets'):
+    os.makedirs('resources/datasets')
+
+  if not os.path.exists('resources/datasets/regression.txt'):
+    raise Exception("Missing dataset file: resources/datasets/regression.txt")
+
+
 def main():
+  prelude()
+
   frame = read()
 
-  # analysis(frame)
+  analysis(frame)
 
   test_models(frame)
 
