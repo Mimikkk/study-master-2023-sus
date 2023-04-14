@@ -5,7 +5,7 @@ import seaborn as sns
 import sklearn.ensemble
 from sklearn import linear_model
 from sklearn import neighbors
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeRegressor, plot_tree
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor
@@ -204,6 +204,11 @@ def present_supposedly_best_model(frame: pd.DataFrame):
   model = DecisionTreeRegressor(max_depth=8)
   model.fit(X, y)
 
+  plt.figure(figsize=(60, 30))
+  plot_tree(model, fontsize=8, filled=True, rounded=True, precision=1)
+  plt.savefig(f'resources/figures/best-model-tree.png', dpi=100)
+  plt.show()
+
   y_pred = model.predict(X)
 
   plt.scatter(y, y_pred, marker='o', s=3, alpha=0.9)
@@ -213,6 +218,7 @@ def present_supposedly_best_model(frame: pd.DataFrame):
 
   plt.plot([y.min(), y.max()], [y.min(), y.max()], '--k', lw=1, alpha=0.8)
   plt.tight_layout()
+
   plt.savefig(f'resources/figures/best-model-slice.png')
   plt.show()
 
