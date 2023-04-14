@@ -11,27 +11,36 @@ def main():
   # Analysis
   print(f"Number of attributes: {frame.shape[1] - 1}")
   print(f"Number of rows: {frame.shape[0]}")
+  with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+    print(f"columns:")
+    print(frame.columns)
 
-  print(f"columns:")
-  print([*frame.columns])
+    print("Attribute Types:")
+    print(frame.dtypes)
 
-  print("Attribute Types:")
-  print(frame.dtypes)
+    print("Attribute Ranges:")
+    print(frame.describe())
 
-  print("Attribute Ranges:")
-  print(frame.describe())
-
+  # Box and Violin Plots
   n_columns = frame.shape[1]
   figure, axes = plt.subplots(2, n_columns, figsize=(120, 8))
-  for (first, second), column in zip(zip(*axes), frame.columns):
-    sns.boxplot(ax=first, data=frame[[column]])
-    first.set_xticklabels(labels=[column])
+  for (box_axis, violin_axis), column in zip(zip(*axes), frame.columns):
+    sns.boxplot(ax=box_axis, data=frame[[column]])
+    box_axis.set_xticklabels(labels=[column])
 
-    sns.violinplot(ax=second, data=frame[[column]])
-    second.set_xticklabels(labels=[column])
+    sns.violinplot(ax=violin_axis, data=frame[[column]])
+    violin_axis.set_xticklabels(labels=[column])
 
   plt.tight_layout()
   plt.savefig(f'resources/figures/attribute-box-violin-plots.png')
+  plt.show()
+
+  # Correlation Matrix
+  correlation_matrix = frame.corr()
+  figure, axes = plt.subplots(1, 1, figsize=(32, 32))
+  sns.heatmap(correlation_matrix, annot=False, ax=axes)
+  plt.tight_layout()
+  plt.savefig(f'resources/figures/correlation-matrix.png')
   plt.show()
 
 
