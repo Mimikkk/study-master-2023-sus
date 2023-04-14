@@ -56,23 +56,29 @@ def analysis(frame: pd.DataFrame):
   plt.show()
 
 
+from sklearn.metrics import mean_squared_error
+
+
+def calculate_metrics(regressor, X, y):
+  return regressor.score(X, y), mean_squared_error(y, regressor.predict(X), squared=False)
+
+
+def format_scores(title, r2, rmse):
+  return f"{title: >20}:\n\tR2: {r2:.2f} | RMSE: {rmse:.2f}"
+
+
 def test_models(frame: pd.DataFrame):
   contents = frame.to_numpy()
 
   X = contents[:, 0:-1]
   y = contents[:, -1]
 
-  from sklearn.metrics import mean_squared_error
-
-  def calculate_metrics(regressor, X, y):
-    return regressor.score(X, y), mean_squared_error(y, regressor.predict(X), squared=False)
-
-  def format_scores(title, r2, rmse):
-    return f"{title: >20}:\n\tR2: {r2:.2f} | RMSE: {rmse:.2f}"
-
   scores = []
   for (name, regressor) in [
-    ("Random Forest", RandomForestRegressor()),
+    ("Random Forest-2", RandomForestRegressor(max_depth=2)),
+    ("Random Forest-5", RandomForestRegressor(max_depth=5)),
+    ("Random Forest-8", RandomForestRegressor(max_depth=8)),
+    ("Random Forest-unbound", RandomForestRegressor(max_depth=None)),
     ("Linear Regression", linear_model.LinearRegression()),
     ("Ridge", linear_model.Ridge()),
     ("Lasso", linear_model.Lasso()),
@@ -117,7 +123,71 @@ def test_models(frame: pd.DataFrame):
   axes[1].set_xticklabels(labels=[name for name, _ in scores], rotation=60)
 
   plt.tight_layout()
-  plt.savefig(f'resources/figures/model-scores.png')
+  plt.savefig(f'resources/figures/normalized-model-metrics.png')
+  plt.show()
+
+
+def test_models_with_normalized_features(frame: pd.DataFrame):
+  contents = frame.to_numpy()
+
+  X = contents[:, 0:-1]
+  y = contents[:, -1]
+
+  from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
+  scaler = RobustScaler()
+  X = scaler.fit_transform(X)
+
+  scores = []
+  for (name, regressor) in [
+    ("Random Forest-2", RandomForestRegressor(max_depth=2)),
+    ("Random Forest-5", RandomForestRegressor(max_depth=5)),
+    ("Random Forest-8", RandomForestRegressor(max_depth=8)),
+    ("Random Forest-unbound", RandomForestRegressor(max_depth=None)),
+    ("Linear Regression", linear_model.LinearRegression()),
+    ("Ridge", linear_model.Ridge()),
+    ("Lasso", linear_model.Lasso()),
+    ("Elastic Net", linear_model.ElasticNet()),
+    ("Bayesian Ridge", linear_model.BayesianRidge()),
+    ("Knn-1", neighbors.KNeighborsRegressor(n_neighbors=1)),
+    ("Knn-2", neighbors.KNeighborsRegressor(n_neighbors=2)),
+    ("Knn-3", neighbors.KNeighborsRegressor(n_neighbors=3)),
+    ("Knn-4", neighbors.KNeighborsRegressor(n_neighbors=4)),
+    ("Knn-8", neighbors.KNeighborsRegressor(n_neighbors=8)),
+    ("Knn-13", neighbors.KNeighborsRegressor(n_neighbors=13)),
+    ("Knn-21", neighbors.KNeighborsRegressor(n_neighbors=21)),
+    ("Tree-2", DecisionTreeRegressor(max_depth=2)),
+    ("Tree-5", DecisionTreeRegressor(max_depth=5)),
+    ("Tree-8", DecisionTreeRegressor(max_depth=8)),
+    ("Tree-unbound", DecisionTreeRegressor(max_depth=None)),
+    ("Pony", MLPRegressor()),
+    ("svr-rbf", SVR(kernel="rbf")),
+    ("svr-linear", SVR(kernel="linear")),
+    ("svr-poly", SVR(kernel="poly")),
+    ("ard", linear_model.ARDRegression()),
+    ("sgd", linear_model.SGDRegressor()),
+    ("adaboost", ensemble.AdaBoostRegressor()),
+    ("gradientboosting", ensemble.GradientBoostingRegressor()),
+  ]:
+    regressor.fit(X, y)
+    scores.append((name, calculate_metrics(regressor, X, y)))
+
+  for name, (r2, rmse) in scores: print(format_scores(name, r2, rmse))
+
+  r2_scores = [r2 for _, (r2, _) in scores]
+  rmse_scores = [rmse for _, (_, rmse) in scores]
+  figure, axes = plt.subplots(1, 2, figsize=(32, 8))
+  sns.barplot(x=[name for name, _ in scores], y=r2_scores, ax=axes[0])
+  axes[0].set_title("R2 Scores with normalized features")
+  axes[0].set_ylabel("R2 Score")
+  axes[0].set_xticklabels(labels=[name for name, _ in scores], rotation=60)
+
+  sns.barplot(x=[name for name, _ in scores], y=rmse_scores, ax=axes[1])
+  axes[1].set_title("RMSE Scores with normalized features")
+  axes[1].set_ylabel("RMSE Score")
+  axes[1].set_xticklabels(labels=[name for name, _ in scores], rotation=60)
+
+  plt.tight_layout()
+  plt.savefig(f'resources/figures/normalized-model-metrics.png')
   plt.show()
 
 
@@ -138,9 +208,11 @@ def main():
 
   frame = read()
 
-  analysis(frame)
+  # analysis(frame)
 
-  test_models(frame)
+  # test_models(frame)
+
+  test_models_with_normalized_features(frame)
 
 
 if __name__ == '__main__':
