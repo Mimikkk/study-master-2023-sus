@@ -191,6 +191,32 @@ def test_models_with_normalized_features(frame: pd.DataFrame):
   plt.show()
 
 
+def present_supposedly_best_model(frame: pd.DataFrame):
+  contents = frame.to_numpy()
+
+  X = contents[:, 0:-1]
+  y = contents[:, -1]
+
+  from sklearn.preprocessing import RobustScaler
+  scaler = RobustScaler()
+  X = scaler.fit_transform(X)
+
+  model = DecisionTreeRegressor(max_depth=8)
+  model.fit(X, y)
+
+  y_pred = model.predict(X)
+
+  plt.scatter(y, y_pred, marker='o', s=3, alpha=0.9)
+  plt.xlabel('Faktyczne wartości')
+  plt.ylabel('Przewidywane wartości')
+  plt.title('DecisionTreeRegressor(max_depth=8)')
+
+  plt.plot([y.min(), y.max()], [y.min(), y.max()], '--k', lw=1, alpha=0.8)
+  plt.tight_layout()
+  plt.savefig(f'resources/figures/best-model-slice.png')
+  plt.show()
+
+
 def prelude():
   import os
   if not os.path.exists('resources/figures'):
@@ -202,7 +228,6 @@ def prelude():
   if not os.path.exists('resources/datasets/regression.txt'):
     raise Exception("Missing dataset file: resources/datasets/regression.txt")
 
-
 def main():
   prelude()
 
@@ -212,7 +237,9 @@ def main():
 
   # test_models(frame)
 
-  test_models_with_normalized_features(frame)
+  # test_models_with_normalized_features(frame)
+
+  present_supposedly_best_model(frame)
 
 
 if __name__ == '__main__':
