@@ -11,6 +11,8 @@ def main():
   sns.boxplot(data=df)
   plt.xticks(rotation=90)
   plt.show()
+  # count classes
+  print(df['class'].value_counts())
 
 if __name__ == '__main__':
   main()
