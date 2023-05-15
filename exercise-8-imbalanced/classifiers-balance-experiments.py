@@ -7,27 +7,15 @@ import dataset as ds
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import make_scorer, confusion_matrix
-from imblearn.metrics import geometric_mean_score
-import seaborn as sns
-import pandas as pd
 
 def main():
   df: DataFrame = ds.load()
   X, y = df.values[:, :-1], df.values[:, -1]
 
-  weight_ratios = [{
-    0: 0.1,
-    1: 0.9
-  }, {
-    0: 0.2,
-    1: 0.8
-  }, {
-    0: 1,
-    1: 1
-  }, "balanced_subsample", 'balanced']
+  weight_ratios = [{0: 0.9,1: 0.1 }, {0: 0.8,1: 0.2 }, {0: 0.5,1: 0.5 }, "balanced_subsample", 'balanced']
+
   false_positives = []
   false_negatives = []
-
   for weight_ratio in weight_ratios:
     pipeline = Pipeline([
       ('smote', SMOTE(random_state=42)),
@@ -50,8 +38,16 @@ def main():
     false_negatives.append(fn)
 
   plt.figure(figsize=(8, 6))
-  plt.plot(weight_ratios, false_positives, label='False Positives')
-  plt.plot(weight_ratios, false_negatives, label='False Negatives')
+  labels = [
+    "1:0.1, 0:0.9",
+    "1:0.2, 0:0.8",
+    "1:0.5, 0:0.5",
+    "balanced_subsample",
+    "balanced"
+  ]
+
+  plt.plot(labels, false_positives, label='False Positives')
+  plt.plot(labels, false_negatives, label='False Negatives')
   plt.xlabel('Proporcja wag')
   plt.ylabel('Liczba')
   plt.title('Liczba FP i FN w zależności od proporcji wag')
