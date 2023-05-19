@@ -31,39 +31,20 @@ def main():
       ('svc', SVC()),
       ('mlp', MLPClassifier())
     ]),
-    VotingClassifier(estimators=[
-      ('gnb', GaussianNB()),
-      ('qda', QuadraticDiscriminantAnalysis()),
-      ('rf', RandomForestClassifier())
-    ]),
-    VotingClassifier(estimators=[
-      ('ada', AdaBoostClassifier()),
-      ('dt', DecisionTreeClassifier()),
-      ('svc', SVC())
-    ]),
     StackingClassifier(estimators=[
       ('dt', DecisionTreeClassifier()),
       ('svc', SVC()),
       ('mlp', MLPClassifier())
     ]),
-    StackingClassifier(estimators=[
-      ('gnb', GaussianNB()),
-      ('qda', QuadraticDiscriminantAnalysis()),
-      ('rf', RandomForestClassifier())
-    ]),
-    StackingClassifier(estimators=[
-      ('ada', AdaBoostClassifier()),
-      ('dt', DecisionTreeClassifier()),
-      ('svc', SVC())
-    ])
   ]
   cv = StratifiedKFold(n_splits=10)
 
   metrics = []
   for classifier in classifiers:
     print(f'Classifier: {classifier.__class__.__name__}')
-
+    standard_scaler = StandardScaler()
     pipeline = Pipeline([
+      ('Scaler', standard_scaler),
       ('Classifier', classifier)
     ])
 
@@ -77,11 +58,7 @@ def main():
     'AdaBoost-DT',
     'R-Forest',
     'Voting-1',
-    'Voting-2',
-    'Voting-3',
     'Stacking-1',
-    'Stacking-2',
-    'Stacking-3'
   ]
 
   x = np.arange(len(labels))
@@ -92,7 +69,7 @@ def main():
   ax.bar(x - width, accuracy, width, label='Trafność')
   ax.bar(x + width, g_mean, width, label='G-Mean')
   ax.set_ylabel('Wyniki')
-  ax.set_title('Wynik względem klasyfikatora i metryki')
+  ax.set_title('Wynik względem klasyfikatora i metryki (znormalizowane)')
   ax.set_xticks(x)
   ax.set_xticklabels(labels)
   ax.legend()
