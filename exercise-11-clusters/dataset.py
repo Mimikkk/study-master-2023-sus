@@ -1,4 +1,4 @@
 import pandas as pd
 
-def load():
-  return pd.read_csv('resources/datasets/145317-clustersel.txt', sep='\t', header=None)
+def load(type="clustersel"):
+  return pd.read_csv(f'resources/datasets/145317-{type}.txt', sep='\t', header=None)
