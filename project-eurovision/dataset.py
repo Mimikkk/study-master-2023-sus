@@ -1,25 +1,11 @@
 from dataclasses import dataclass
+import functools
 from typing import ClassVar
 
+import pandas
 from pandas import DataFrame, read_csv
 
-@dataclass
-class _polls(object):
-  year2016: DataFrame
-  year2017: DataFrame
-  year2018: DataFrame
-  year2019: DataFrame
-  year2021: DataFrame
-  year2022: DataFrame
-
-@dataclass
-class _meta(object):
-  countries: DataFrame
-  contest: DataFrame
-
-def is_english(language: str): return language == 'English'
-
-official_languages = {
+_official_languages = {
   'Albania': ['Albanian'],
   'Latvia': ['Latvian'],
   'Lithuania': ['Lithuanian'],
@@ -69,8 +55,26 @@ official_languages = {
   'Andorra': ['Catalan'],
 }
 
+def is_english(language: str):
+  return language == 'English'
+
 def is_native(country: str, language: str):
-  return official_languages.get(country, []).__contains__(language)
+  return _official_languages.get(country, []).__contains__(language)
+
+@dataclass
+class _polls(object):
+  year2016: DataFrame
+  year2017: DataFrame
+  year2018: DataFrame
+  year2019: DataFrame
+  year2021: DataFrame
+  year2022: DataFrame
+  all: DataFrame
+
+@dataclass
+class _meta(object):
+  countries: DataFrame
+  contest: DataFrame
 
 
 @dataclass
@@ -94,24 +98,28 @@ class EurovisionDataset(object):
       tele.rename(columns={column: f'Tele-{column}' for column in tele.columns[4:]}, inplace=True)
       jury.fillna(0, inplace=True)
       tele.fillna(0, inplace=True)
+      jury.set_index('Contestant', inplace=True)
+      tele.set_index('Contestant', inplace=True)
 
-      return jury.merge(
+      merged = jury.merge(
         tele.drop(columns=["Total score", "Jury score", "Televoting score"]),
-        on=['Contestant'],
+        left_index=True,
+        right_index=True,
         how='inner'
       )
+      return merged
 
     songs = read('song_data')
     songs.fillna(0, inplace=True)
 
     songs['in_english'] = songs.language.apply(is_english)
-    songs['in_native'] = [
-      is_native(country, language)
-      for country, language in zip(songs.country, songs.language)
-    ]
+    songs['in_native'] = list(map(is_native, songs.country, songs.language))
+
+    years = list(map(merge_polls, (2016, 2017, 2018, 2019, 2021, 2022)))
+    summed = functools.reduce(lambda left, right: left.add(right, fill_value=0), years)
 
     return cls(
-      _polls(*map(merge_polls, (2016, 2017, 2018, 2019, 2021, 2022))),
+      _polls(*years, summed),
       _meta(*map(read, ('country_data', 'contest_data'))),
       songs
     )
