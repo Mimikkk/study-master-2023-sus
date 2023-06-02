@@ -116,10 +116,10 @@ class EurovisionDataset(object):
     songs['in_english'] = songs.language.apply(is_english)
     songs['in_native'] = list(map(is_native, songs.country, songs.language))
 
-    songs['semi_draw_position'] = songs['semi_draw_position'].replace('-', 0)
-    songs['semi_draw_position'] = songs['semi_draw_position'].astype(int)
-    songs['final_draw_position'] = songs['final_draw_position'].replace('-', 0)
-    songs['final_draw_position'] = songs['final_draw_position'].astype(int)
+    songs['semi_place'] = songs['semi_place'].replace('-', 0)
+    songs['semi_place'] = songs['semi_place'].astype(int)
+    songs['final_place'] = songs['final_place'].replace('-', 0)
+    songs['final_place'] = songs['final_place'].astype(int)
 
     years = list(map(merge_polls, (2016, 2017, 2018, 2019, 2021, 2022)))
     summed = functools.reduce(lambda left, right: left.add(right, fill_value=0), years)
