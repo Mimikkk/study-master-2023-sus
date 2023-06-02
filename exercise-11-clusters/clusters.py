@@ -41,7 +41,7 @@ def main():
   plt.scatter(clustercenters_trans[:, 0], clustercenters_trans[:, 1], marker='x', color='red')
 
   unique_labels = set(k_means.labels_)
-  color_map = matplotlib.colormaps['Set1']
+  color_map = matplotlib.colormaps['tab20']
 
   for label in unique_labels:
     cluster = pca_2d.transform(X[k_means.labels_ == label])
