@@ -5,12 +5,12 @@ from pandas import DataFrame, read_csv
 
 @dataclass
 class _polls(object):
-  _2016: DataFrame
-  _2017: DataFrame
-  _2018: DataFrame
-  _2019: DataFrame
-  _2021: DataFrame
-  _2022: DataFrame
+  year2016: DataFrame
+  year2017: DataFrame
+  year2018: DataFrame
+  year2019: DataFrame
+  year2021: DataFrame
+  year2022: DataFrame
 
 @dataclass
 class _meta(object):
@@ -39,7 +39,7 @@ class EurovisionDataset(object):
       jury.fillna(0, inplace=True)
       tele.fillna(0, inplace=True)
 
-      return jury.merge(tele, on=['Contestant'], how='inner')
+      return jury.merge(tele.drop(columns=["Total score", "Jury score", "Televoting score"]), on=['Contestant'], how='inner')
 
     return cls(
       _polls(*map(merge_polls, (2016, 2017, 2018, 2019, 2021, 2022))),
