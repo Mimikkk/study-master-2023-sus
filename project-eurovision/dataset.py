@@ -16,12 +16,68 @@ class _polls(object):
 class _meta(object):
   countries: DataFrame
   contest: DataFrame
-  songs: DataFrame
+
+def is_english(language: str): return language == 'English'
+
+official_languages = {
+  'Albania': ['Albanian'],
+  'Latvia': ['Latvian'],
+  'Lithuania': ['Lithuanian'],
+  'Switzerland': ['French', 'German', 'Italian'],
+  'Slovenia': ['Slovene'],
+  'Ukraine': ['Ukrainian'],
+  'Bulgaria': ['Bulgarian'],
+  'Netherlands': ['Dutch'],
+  'Moldova': ['Romanian'],
+  'Portugal': ['Portuguese'],
+  'Croatia': ['Croatian'],
+  'Denmark': ['Danish'],
+  'Austria': ['German'],
+  'Iceland': ['Icelandic'],
+  'Greece': ['Greek'],
+  'Norway': ['Norwegian'],
+  'Armenia': ['Armenian'],
+  'Finland': ['Finnish', 'Swedish'],
+  'Israel': ['Hebrew'],
+  'Serbia': ['Serbian'],
+  'Azerbaijan': ['Azerbaijani'],
+  'Georgia': ['Georgian'],
+  'Malta': ['Maltese', 'English'],
+  'San Marino': ['Italian'],
+  'Australia': ['English'],
+  'Cyprus': ['Greek', 'Turkish'],
+  'Ireland': ['English', 'Irish'],
+  'North Macedonia': ['Macedonian'],
+  'Estonia': ['Estonian'],
+  'Romania': ['Romanian'],
+  'Poland': ['Polish'],
+  'Montenegro': ['Montenegrin'],
+  'Belgium': ['Dutch', 'French', 'German'],
+  'Sweden': ['Swedish'],
+  'Czech Republic': ['Czech'],
+  'Italy': ['Italian', 'Italian[f]'],
+  'Spain': ['Spanish'],
+  'Germany': ['German'],
+  'United Kingdom': ['English'],
+  'France': ['French'],
+  'Russia': ['Russian'],
+  'Hungary': ['Hungarian'],
+  'Belarus': ['Belarusian'],
+  'Bosnia and Herzegovina': ['Bosnian', 'Croatian', 'Serbian'],
+  'Turkey': ['Turkish'],
+  'Slovakia': ['Slovak'],
+  'Andorra': ['Catalan'],
+}
+
+def is_native(country: str, language: str):
+  return official_languages.get(country, []).__contains__(language)
+
 
 @dataclass
 class EurovisionDataset(object):
   votes: _polls
   meta: _meta
+  songs: DataFrame
   _resources_directory: ClassVar[str] = 'resources/datasets/eurovision'
 
 
@@ -39,9 +95,23 @@ class EurovisionDataset(object):
       jury.fillna(0, inplace=True)
       tele.fillna(0, inplace=True)
 
-      return jury.merge(tele.drop(columns=["Total score", "Jury score", "Televoting score"]), on=['Contestant'], how='inner')
+      return jury.merge(
+        tele.drop(columns=["Total score", "Jury score", "Televoting score"]),
+        on=['Contestant'],
+        how='inner'
+      )
+
+    songs = read('song_data')
+    songs.fillna(0, inplace=True)
+
+    songs['in_english'] = songs.language.apply(is_english)
+    songs['in_native'] = [
+      is_native(country, language)
+      for country, language in zip(songs.country, songs.language)
+    ]
 
     return cls(
       _polls(*map(merge_polls, (2016, 2017, 2018, 2019, 2021, 2022))),
-      _meta(*map(read, ('country_data', 'contest_data', 'song_data')))
+      _meta(*map(read, ('country_data', 'contest_data'))),
+      songs
     )
